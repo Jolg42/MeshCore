@@ -162,6 +162,10 @@ protected:
 
 public:
   void savePrefs() { _store->savePrefs(_prefs, sensors.node_lat, sensors.node_lon); }
+  int getOfflineQueueLen() const { return offline_queue_len; }
+  int getOfflineQueueSize() const { return OFFLINE_QUEUE_SIZE; }
+  uint32_t getStorageUsedKb() const { return _store->getStorageUsedKb(); }
+  uint32_t getStorageTotalKb() const { return _store->getStorageTotalKb(); }
 
 private:
   void writeOKFrame();

@@ -88,6 +88,11 @@ class HomeScreen : public UIScreen {
 #if UI_SENSORS_PAGE == 1
     SENSORS,
 #endif
+    MESH_STATS,
+    SIGNAL_QUALITY,
+    MSG_QUEUE,
+    STORAGE,
+    DEVICE_INFO,
     SHUTDOWN,
     Count    // keep as last
   };
@@ -392,6 +397,104 @@ public:
       if (sensors_scroll) sensors_scroll_offset = (sensors_scroll_offset+1)%sensors_nb;
       else sensors_scroll_offset = 0;
 #endif
+    } else if (_page == HomePage::MESH_STATS) {
+      display.setColor(DisplayDriver::YELLOW);
+      display.setTextSize(1);
+      int y = 20;
+      sprintf(tmp, "TX: %u s", (unsigned)(the_mesh.getTotalAirTime() / 1000));
+      display.drawTextLeftAlign(0, y, tmp);
+      sprintf(tmp, "RX: %u s", (unsigned)(the_mesh.getReceiveAirTime() / 1000));
+      display.drawTextRightAlign(display.width()-1, y, tmp);
+      y += 11;
+      sprintf(tmp, "Sent  F:%u D:%u", (unsigned)the_mesh.getNumSentFlood(), (unsigned)the_mesh.getNumSentDirect());
+      display.drawTextLeftAlign(0, y, tmp);
+      y += 11;
+      sprintf(tmp, "Recv  F:%u D:%u", (unsigned)the_mesh.getNumRecvFlood(), (unsigned)the_mesh.getNumRecvDirect());
+      display.drawTextLeftAlign(0, y, tmp);
+      y += 11;
+      sprintf(tmp, "Budget: %u s", (unsigned)(the_mesh.getRemainingTxBudget() / 1000));
+      display.drawTextLeftAlign(0, y, tmp);
+    } else if (_page == HomePage::SIGNAL_QUALITY) {
+      display.setColor(DisplayDriver::YELLOW);
+      display.setTextSize(1);
+      int y = 20;
+      sprintf(tmp, "RSSI: %d dBm", (int16_t)radio_driver.getLastRSSI());
+      display.drawTextLeftAlign(0, y, tmp);
+      y += 11;
+      sprintf(tmp, "SNR:  %.1f dB", radio_driver.getLastSNR());
+      display.drawTextLeftAlign(0, y, tmp);
+      y += 11;
+      sprintf(tmp, "Noise: %d", radio_driver.getNoiseFloor());
+      display.drawTextLeftAlign(0, y, tmp);
+      y += 11;
+      sprintf(tmp, "Pkts: %u ok  %u err",
+        (unsigned)radio_driver.getPacketsRecv(), (unsigned)radio_driver.getPacketsRecvErrors());
+      display.drawTextLeftAlign(0, y, tmp);
+    } else if (_page == HomePage::MSG_QUEUE) {
+      display.setColor(DisplayDriver::YELLOW);
+      display.setTextSize(1);
+      int y = 20;
+      display.drawTextCentered(display.width() / 2, y, "Offline Queue");
+      y += 14;
+      display.setTextSize(2);
+      sprintf(tmp, "%d / %d", the_mesh.getOfflineQueueLen(), the_mesh.getOfflineQueueSize());
+      display.drawTextCentered(display.width() / 2, y, tmp);
+      y += 18;
+      display.setTextSize(1);
+      int pct = the_mesh.getOfflineQueueSize() > 0
+        ? (the_mesh.getOfflineQueueLen() * 100) / the_mesh.getOfflineQueueSize() : 0;
+      // progress bar
+      int barW = display.width() - 20;
+      int barX = 10;
+      display.setColor(DisplayDriver::GREEN);
+      display.drawRect(barX, y, barW, 8);
+      int fillW = (pct * (barW - 2)) / 100;
+      if (fillW > 0) display.fillRect(barX + 1, y + 1, fillW, 6);
+    } else if (_page == HomePage::STORAGE) {
+      display.setColor(DisplayDriver::YELLOW);
+      display.setTextSize(1);
+      int y = 20;
+      display.drawTextCentered(display.width() / 2, y, "Storage");
+      y += 14;
+      uint32_t used = the_mesh.getStorageUsedKb();
+      uint32_t total = the_mesh.getStorageTotalKb();
+      display.setTextSize(2);
+      sprintf(tmp, "%u/%uKB", (unsigned)used, (unsigned)total);
+      display.drawTextCentered(display.width() / 2, y, tmp);
+      y += 18;
+      display.setTextSize(1);
+      int pct = total > 0 ? (used * 100) / total : 0;
+      // progress bar
+      int barW = display.width() - 20;
+      int barX = 10;
+      display.setColor(DisplayDriver::GREEN);
+      display.drawRect(barX, y, barW, 8);
+      int fillW = (pct * (barW - 2)) / 100;
+      if (fillW > 0) display.fillRect(barX + 1, y + 1, fillW, 6);
+    } else if (_page == HomePage::DEVICE_INFO) {
+      display.setColor(DisplayDriver::YELLOW);
+      display.setTextSize(1);
+      int y = 20;
+      sprintf(tmp, "FW: %s", FIRMWARE_VERSION);
+      display.drawTextLeftAlign(0, y, tmp);
+      y += 11;
+      // public key prefix (first 4 bytes = 8 hex chars)
+      char id_hex[9];
+      for (int i = 0; i < 4; i++) {
+        sprintf(&id_hex[i*2], "%02x", the_mesh.self_id.pub_key[i]);
+      }
+      sprintf(tmp, "ID: %s...", id_hex);
+      display.drawTextLeftAlign(0, y, tmp);
+      y += 11;
+      // uptime
+      uint32_t up_secs = millis() / 1000;
+      uint32_t up_h = up_secs / 3600;
+      uint32_t up_m = (up_secs % 3600) / 60;
+      sprintf(tmp, "Up: %uh %um", (unsigned)up_h, (unsigned)up_m);
+      display.drawTextLeftAlign(0, y, tmp);
+      y += 11;
+      sprintf(tmp, "Batt: %d mV", board.getBattMilliVolts());
+      display.drawTextLeftAlign(0, y, tmp);
     } else if (_page == HomePage::SHUTDOWN) {
       display.setColor(DisplayDriver::GREEN);
       display.setTextSize(1);
