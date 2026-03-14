@@ -21,9 +21,10 @@ runs:
       run: |
         pip install --upgrade platformio
 
-    # a git tag of "room-server-v1.2.3" should set "v1.2.3" as GIT_TAG_VERSION
+    # Extract version from tag: "companion-v1.2.3" -> "v1.2.3", "room-server-v1.14.0-fork.2" -> "v1.14.0-fork.2"
     - name: Extract Version from Git Tag
       shell: bash
       run: |
         GIT_TAG_NAME="${GITHUB_REF#refs/tags/}"
-        echo "GIT_TAG_VERSION=${GIT_TAG_NAME##*-}" >> $GITHUB_ENV
+        GIT_TAG_VERSION=$(echo "$GIT_TAG_NAME" | sed 's/^[^v]*//')
+        echo "GIT_TAG_VERSION=${GIT_TAG_VERSION}" >> $GITHUB_ENV
