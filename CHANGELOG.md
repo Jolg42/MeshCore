@@ -2,7 +2,7 @@
 
 Changes in this fork on top of upstream [ripplebiz/MeshCore](https://github.com/ripplebiz/MeshCore).
 
-## v1.0.0
+## v1.14.0-fork.2
 
 ### Buzzer off by default
 
